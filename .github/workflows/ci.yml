@@ -9,5 +9,27 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install numpy pandas scipy scikit-learn pytest
-      - run: python -c "from generators.tabular_generator import generate_synthetic_customer_data; df=generate_synthetic_customer_data(200); assert len(df)==200; print(f'synth OK: {df.shape}')"
+      - name: Test tabular generator
+        run: |
+          python - <<'PYEOF'
+          from generators.tabular_generator import generate_synthetic_customer_data
+          df = generate_synthetic_customer_data(200)
+          assert len(df) == 200
+          assert 'churned' in df.columns
+          print('synth OK, shape:', df.shape)
+          PYEOF
+      - name: Test privacy auditor
+        run: |
+          python - <<'PYEOF'
+          import numpy as np
+          import pandas as pd
+          from audit.privacy_audit import PrivacyAuditor
+          rng = np.random.default_rng(0)
+          real = pd.DataFrame({'a': rng.standard_normal(100), 'b': rng.standard_normal(100)})
+          synth = pd.DataFrame({'a': rng.standard_normal(100), 'b': rng.standard_normal(100)})
+          auditor = PrivacyAuditor()
+          metrics = auditor.dcr(real, synth)
+          assert 0 <= metrics['privacy_score'] <= 1
+          print('privacy audit OK, score:', round(metrics['privacy_score'], 3))
+          PYEOF
       - run: python generate.py --rows 200
