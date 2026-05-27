@@ -1,9 +1,5 @@
 name: CI
-"on":
-  push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
+on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -11,8 +7,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.11'
       - run: pip install numpy pandas scipy scikit-learn pytest
       - run: python -c "from generators.tabular_generator import generate_synthetic_customer_data; df=generate_synthetic_customer_data(200); assert len(df)==200; print(f'synth OK: {df.shape}')"
-      - run: python -c "from audit.privacy_audit import PrivacyAuditor; import pandas as pd, numpy as np; rng=np.random.default_rng(0); r=pd.DataFrame({'a':rng.standard_normal(100),'b':rng.standard_normal(100)}); s=pd.DataFrame({'a':rng.standard_normal(100),'b':rng.standard_normal(100)}); a=PrivacyAuditor(); m=a.dcr(r,s); assert 0<=m['privacy_score']<=1; print('audit OK')"
       - run: python generate.py --rows 200
